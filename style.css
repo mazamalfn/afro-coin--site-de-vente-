@@ -1,0 +1,161 @@
+/* ELIXIR & COUTURE - Luxury Styles */
+
+/* Base Styles */
+:root {
+    --primary-font: 'Playfair Display', serif;
+    --secondary-font: 'Source Serif 4', serif;
+    --label-font: 'Manrope', sans-serif;
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Glassmorphism & Blurs */
+.luxury-blur {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #fff8f7;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d4c2c2;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #7c5454;
+}
+
+/* Hide scrollbar for elements */
+.scroll-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* Animations */
+.image-reveal {
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-hover:hover .image-reveal {
+    transform: scale(1.05);
+}
+
+.fade-in {
+    animation: fadeIn 1.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Product Card Effects */
+.product-card {
+    transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.product-card:hover {
+    transform: translateY(-8px);
+}
+
+.product-card:hover .hover-image {
+    opacity: 1;
+}
+
+.product-card:hover .primary-image {
+    opacity: 0;
+}
+
+/* Magnetic Button Feel */
+.btn-premium {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+}
+
+.btn-premium:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-premium:hover:after {
+    width: 300px;
+    height: 300px;
+}
+
+/* Custom Cursor */
+.custom-cursor {
+    width: 8px;
+    height: 8px;
+    background: #7c5454;
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s ease;
+}
+
+.cursor-follower {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #7c5454;
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.2s ease, width 0.3s, height 0.3s, background 0.3s;
+}
+
+.cursor-active .cursor-follower {
+    transform: translate(-10px, -10px) scale(1.5);
+    background: rgba(124, 84, 84, 0.1);
+}
+
+/* Responsive fixes */
+@media (max-width: 768px) {
+    .custom-cursor, .cursor-follower {
+        display: none;
+    }
+    
+    .font-display-lg {
+        font-size: 2.5rem;
+        line-height: 1.1;
+    }
+    
+    .text-display-lg {
+        font-size: 2.75rem;
+    }
+}
+
+/* Mobile Menu Helper */
+#mobile-menu {
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
