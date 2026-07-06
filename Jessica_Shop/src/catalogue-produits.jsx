@@ -9,6 +9,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { supabase } from "../lib/supabaseClient"; // ⚠️ adapte le chemin si différent
 
 const FONT_IMPORT = `@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');`;
 
@@ -42,32 +43,31 @@ function PlaceholderPhoto({ icon: Icon = ShoppingBag, tone = "leather" }) {
   );
 }
 
-// Catalogue complet — remplace par tes vrais produits (ou branche-le sur Supabase plus tard)
-const CATALOGUE = [
-  { id: 1, nom: "Sac Ambre — cuir grainé", categorie: "Sacs à main", prix: 42000, note: 4.8, avis: 24, nouveau: false, tone: "leather" },
-  { id: 2, nom: "Sac Terracotta bandoulière", categorie: "Sacs bandoulière", prix: 38000, note: 4.6, avis: 17, nouveau: false, tone: "leather" },
-  { id: 3, nom: "Pochette Soir Noir", categorie: "Pochettes", prix: 22000, note: 4.9, avis: 31, nouveau: true, tone: "leather" },
-  { id: 4, nom: "Sac Cognac structuré", categorie: "Sacs à main", prix: 45000, note: 4.5, avis: 9, nouveau: true, tone: "leather" },
-  { id: 5, nom: "Sac Besace Sable", categorie: "Sacs bandoulière", prix: 33000, note: 4.4, avis: 12, nouveau: false, tone: "leather" },
-  { id: 6, nom: "Pochette Dorée Soirée", categorie: "Pochettes", prix: 19500, note: 4.7, avis: 15, nouveau: false, tone: "leather" },
-  { id: 7, nom: "Parfum Nuit Bleue — 50ml", categorie: "Parfums Femme", prix: 25000, note: 4.7, avis: 42, nouveau: false, tone: "perfume" },
-  { id: 8, nom: "Parfum Santal Doré — 100ml", categorie: "Parfums Homme", prix: 32000, note: 4.9, avis: 28, nouveau: false, tone: "perfume" },
-  { id: 9, nom: "Parfum Fleur d'Ambre — 50ml", categorie: "Parfums Femme", prix: 27000, note: 4.6, avis: 19, nouveau: true, tone: "perfume" },
-  { id: 10, nom: "Parfum Cuir Noir — 100ml", categorie: "Parfums Homme", prix: 34000, note: 4.8, avis: 22, nouveau: false, tone: "perfume" },
-  { id: 11, nom: "Coffret Duo Découverte", categorie: "Coffrets", prix: 45000, note: 5.0, avis: 12, nouveau: true, tone: "perfume" },
-  { id: 12, nom: "Coffret Signature", categorie: "Coffrets", prix: 52000, note: 4.9, avis: 8, nouveau: false, tone: "perfume" },
-];
-
 const CATEGORIES = ["Tous", "Sacs", "Parfums", "Sacs à main", "Sacs bandoulière", "Pochettes", "Parfums Femme", "Parfums Homme", "Coffrets"];
+
+// type Supabase -> tone visuel utilisé par les composants
+function typeToTone(type) {
+  return type === "sac" ? "leather" : "perfume";
+}
 
 function ProductCard({ p }) {
   const [fav, setFav] = useState(false);
-  const Icon = p.tone === "leather" ? ShoppingBag : Sparkles;
+  const tone = typeToTone(p.type);
+  const Icon = tone === "leather" ? ShoppingBag : Sparkles;
+
   return (
     <div>
       <div className="relative aspect-square rounded-xl overflow-hidden" style={{ background: cream }}>
-        <PlaceholderPhoto icon={Icon} tone={p.tone} />
-        {p.tone === "leather" && <Stitch />}
+        {p.image_url ? (
+          <img
+            src={p.image_url}
+            alt={p.nom}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <PlaceholderPhoto icon={Icon} tone={tone} />
+        )}
+        {tone === "leather" && <Stitch />}
         {p.nouveau && (
           <span
             className="absolute top-2.5 left-2.5 text-[10px] px-2 py-1 rounded-full uppercase tracking-wide"
@@ -102,8 +102,8 @@ function ProductCard({ p }) {
         </div>
         <div className="flex items-center justify-between mt-2">
           <span style={{ color: ink, fontFamily: "Inter", fontWeight: 600 }}>{p.prix.toLocaleString("fr-FR")} F</span>
-          <a
-            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour, je suis intéressé(e) par : " + p.nom)}`}
+
+          <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour, je suis intéressé(e) par : " + p.nom)}`}
             className="text-xs px-3 py-1.5 rounded-full flex items-center gap-1"
             style={{ background: ink, color: "#fff" }}
           >
@@ -115,11 +115,28 @@ function ProductCard({ p }) {
   );
 }
 
+function SkeletonCard() {
+  return (
+    <div className="animate-pulse">
+      <div className="aspect-square rounded-xl" style={{ background: "#e8e0d0" }} />
+      <div className="mt-3 space-y-2">
+        <div className="h-3 w-1/3 rounded" style={{ background: "#e8e0d0" }} />
+        <div className="h-4 w-2/3 rounded" style={{ background: "#e8e0d0" }} />
+        <div className="h-3 w-1/2 rounded" style={{ background: "#e8e0d0" }} />
+      </div>
+    </div>
+  );
+}
+
 export default function Catalogue({ onNavigate, initialCategory = "Tous", initialTri = "populaire" }) {
   const [categorie, setCategorie] = useState(initialCategory);
   const [tri, setTri] = useState(initialTri);
   const [recherche, setRecherche] = useState("");
   const [filtresOuverts, setFiltresOuverts] = useState(false);
+
+  const [produits, setProduits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     setCategorie(initialCategory);
@@ -129,11 +146,33 @@ export default function Catalogue({ onNavigate, initialCategory = "Tous", initia
     setTri(initialTri);
   }, [initialTri]);
 
+  useEffect(() => {
+    async function fetchProduits() {
+      setLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase
+        .from("produits")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Erreur Supabase :", error);
+        setError("Impossible de charger les produits. Réessaie plus tard.");
+      } else {
+        setProduits(data);
+      }
+      setLoading(false);
+    }
+
+    fetchProduits();
+  }, []);
+
   const produitsAffiches = useMemo(() => {
-    let liste = CATALOGUE.filter((p) => {
+    let liste = produits.filter((p) => {
       if (categorie === "Tous") return true;
-      if (categorie === "Sacs") return p.tone === "leather";
-      if (categorie === "Parfums") return p.tone === "perfume";
+      if (categorie === "Sacs") return p.type === "sac";
+      if (categorie === "Parfums") return p.type === "parfum";
       return p.categorie === categorie;
     });
     if (recherche.trim()) {
@@ -145,15 +184,14 @@ export default function Catalogue({ onNavigate, initialCategory = "Tous", initia
     if (tri === "note") liste = [...liste].sort((a, b) => b.note - a.note);
     if (tri === "nouveau") liste = [...liste].sort((a, b) => (b.nouveau === true) - (a.nouveau === true));
     return liste;
-  }, [categorie, tri, recherche]);
+  }, [produits, categorie, tri, recherche]);
 
   return (
     <div style={{ background: cream, color: ink, fontFamily: "Inter, sans-serif", minHeight: "100vh" }}>
       <style>{FONT_IMPORT}</style>
 
-      {/* Header */}
       <header className="flex items-center justify-between px-6 md:px-12 py-6" style={{ borderBottom: `1px solid ${line}` }}>
-        <div 
+        <div
           onClick={() => onNavigate('accueil')}
           className="cursor-pointer hover:opacity-85 transition-opacity"
           style={{ fontFamily: "Cormorant Garamond", fontWeight: 700, fontSize: 22, letterSpacing: "0.04em" }}
@@ -171,15 +209,13 @@ export default function Catalogue({ onNavigate, initialCategory = "Tous", initia
         </a>
       </header>
 
-      {/* Titre */}
       <div className="px-6 md:px-12 pt-10 pb-6">
         <div className="text-xs uppercase tracking-wider mb-2" style={{ color: leather }}>
-          {produitsAffiches.length} produit{produitsAffiches.length > 1 ? "s" : ""}
+          {loading ? "Chargement…" : `${produitsAffiches.length} produit${produitsAffiches.length > 1 ? "s" : ""}`}
         </div>
         <h1 style={{ fontFamily: "Cormorant Garamond", fontWeight: 600, fontSize: 38 }}>Le catalogue</h1>
       </div>
 
-      {/* Barre recherche + tri */}
       <div className="px-6 md:px-12 flex flex-wrap gap-3 items-center pb-6">
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-full flex-1 min-w-[200px]" style={{ background: "#fff", border: `1px solid ${line}` }}>
           <Search size={15} color="#8a8478" />
@@ -219,10 +255,7 @@ export default function Catalogue({ onNavigate, initialCategory = "Tous", initia
         </button>
       </div>
 
-      {/* Catégories */}
-      <div
-        className={`px-6 md:px-12 pb-8 flex-wrap gap-2 ${filtresOuverts ? "flex" : "hidden md:flex"}`}
-      >
+      <div className={`px-6 md:px-12 pb-8 flex-wrap gap-2 ${filtresOuverts ? "flex" : "hidden md:flex"}`}>
         {CATEGORIES.map((c) => (
           <button
             key={c}
@@ -239,9 +272,19 @@ export default function Catalogue({ onNavigate, initialCategory = "Tous", initia
         ))}
       </div>
 
-      {/* Grille produits */}
       <div className="px-6 md:px-12 pb-20">
-        {produitsAffiches.length === 0 ? (
+        {error ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div style={{ fontFamily: "Cormorant Garamond", fontSize: 22, fontWeight: 600 }}>Oups…</div>
+            <p className="text-sm mt-1" style={{ color: "#8a8478" }}>{error}</p>
+          </div>
+        ) : loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : produitsAffiches.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Sparkles size={28} color={leather} className="mb-3" />
             <div style={{ fontFamily: "Cormorant Garamond", fontSize: 22, fontWeight: 600 }}>Aucun produit trouvé</div>
@@ -258,7 +301,6 @@ export default function Catalogue({ onNavigate, initialCategory = "Tous", initia
         )}
       </div>
 
-      {/* Footer minimal */}
       <footer className="px-6 md:px-12 py-8 text-center text-xs" style={{ borderTop: `1px solid ${line}`, color: "#8a8478" }}>
         MAISON — ta marque · Basé à Lomé · Commandes par WhatsApp
       </footer>
