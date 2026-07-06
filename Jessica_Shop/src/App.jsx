@@ -1,42 +1,43 @@
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import Accueil from './accueil-catalogue'
 import Catalogue from './catalogue-produits'
+import Login from './Login'
 
-function App() {
-  const [page, setPage] = useState('accueil') // 'accueil' | 'catalogue'
-  const [initialCategory, setInitialCategory] = useState('Tous')
-  const [initialTri, setInitialTri] = useState('populaire')
-
+function AccueilWrapper() {
+  const navigate = useNavigate()
   const handleNavigate = (targetPage, options = {}) => {
-    if (options.category !== undefined) {
-      setInitialCategory(options.category)
-    } else if (targetPage === 'accueil') {
-      setInitialCategory('Tous')
+    if (targetPage === 'catalogue') {
+      const params = new URLSearchParams()
+      if (options.category) params.set('categorie', options.category)
+      if (options.tri) params.set('tri', options.tri)
+      navigate(`/catalogue?${params.toString()}`)
     }
-
-    if (options.tri !== undefined) {
-      setInitialTri(options.tri)
-    } else if (targetPage === 'accueil') {
-      setInitialTri('populaire')
-    }
-
-    setPage(targetPage)
-    // Smooth scroll to top of the page on navigation
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+  return <Accueil onNavigate={handleNavigate} />
+}
 
+function CatalogueWrapper() {
+  const navigate = useNavigate()
+  const handleNavigate = (targetPage) => {
+    if (targetPage === 'accueil') {
+      navigate('/')
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  return <Catalogue onNavigate={handleNavigate} />
+}
+
+function App() {
   return (
-    <>
-      {page === 'accueil' ? (
-        <Accueil onNavigate={handleNavigate} />
-      ) : (
-        <Catalogue
-          onNavigate={handleNavigate}
-          initialCategory={initialCategory}
-          initialTri={initialTri}
-        />
-      )}
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<AccueilWrapper />} />
+        <Route path="/catalogue" element={<CatalogueWrapper />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

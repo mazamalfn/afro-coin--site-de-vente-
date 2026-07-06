@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Heart,
@@ -9,7 +10,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { supabase } from "../lib/supabaseClient"; // ⚠️ adapte le chemin si différent
+import { supabase } from "./Supabaseclient"; // ⚠️ adapte le chemin si différent
 
 const FONT_IMPORT = `@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');`;
 
@@ -126,26 +127,16 @@ function SkeletonCard() {
       </div>
     </div>
   );
-}
-
-export default function Catalogue({ onNavigate, initialCategory = "Tous", initialTri = "populaire" }) {
-  const [categorie, setCategorie] = useState(initialCategory);
-  const [tri, setTri] = useState(initialTri);
+} export default function Catalogue({ onNavigate }) {
+  const [searchParams] = useSearchParams();
+  const [categorie, setCategorie] = useState(searchParams.get("categorie") || "Tous");
+  const [tri, setTri] = useState(searchParams.get("tri") || "populaire");
   const [recherche, setRecherche] = useState("");
   const [filtresOuverts, setFiltresOuverts] = useState(false);
 
   const [produits, setProduits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    setCategorie(initialCategory);
-  }, [initialCategory]);
-
-  useEffect(() => {
-    setTri(initialTri);
-  }, [initialTri]);
-
   useEffect(() => {
     async function fetchProduits() {
       setLoading(true);
