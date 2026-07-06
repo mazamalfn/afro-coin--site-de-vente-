@@ -3,6 +3,8 @@ import { useState } from 'react'
 import Accueil from './accueil-catalogue'
 import Catalogue from './catalogue-produits'
 import Login from './Login'
+import Admin from './Admin'
+import ProtectedRoute from './ProtectedRoute'
 
 function AccueilWrapper() {
   const navigate = useNavigate()
@@ -36,6 +38,14 @@ function App() {
         <Route path="/" element={<AccueilWrapper />} />
         <Route path="/catalogue" element={<CatalogueWrapper />} />
         <Route path="/login" element={<Login />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   )
